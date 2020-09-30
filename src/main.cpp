@@ -1,6 +1,7 @@
 /*
-Etienne Arlaud
-*/
+ * Etienne Arlaud
+ * Modificaciones Felipe Villenas - 09-29-2020 
+ */
 
 #include <stdint.h>
 #include <stdio.h>
@@ -44,13 +45,15 @@ void print_packet(uint8_t *data, int len)
 void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	handler->mypacket.wlan.actionframe.content.length = 127 + 5;
 	memcpy(handler->mypacket.wlan.actionframe.content.payload, data, 6);
-
-	if(data[4] == 0 && data[5] == 0)
+	
+	/* Estos dos bytes corresponden al numero del paquete */
+	if(data[4] == 0 && data[5] == 0){
 		n_received = 0;
+	}
 	n_received++;
+	
 	printf("Packets Received = %d\n", n_received);
 	print_packet(data, len);
-	
 
 	handler->send();
 }
