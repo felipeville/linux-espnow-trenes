@@ -3,14 +3,15 @@
  * Modificaciones Felipe Villenas - 09-29-2020 
  */
 
-#include <stdint.h>
 #include <stdio.h>
-
+#include <iostream>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
-
 #include <thread>
+
+#include <fstream>
+//#include <sstream>
 
 #include "ESPNOW_manager.h"
 #include "ESPNOW_types.h"
@@ -22,6 +23,7 @@ static uint8_t dest_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};	// broadcast 
 static uint8_t ESP_mac[6] = {0xC8,0x2B,0x96,0xB4,0xE6,0xCC};
 
 int n_received;
+std::ofstream myFile("data.csv");
 
 ESPNOW_manager *handler;
 
@@ -52,7 +54,7 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	}
 	n_received++;
 	
-	printf("Packets Received = %d\n", n_received);
+	std::cout << "Packets Received = " << n_received << std::endl;
 	print_packet(data, len);
 
 	handler->send();
@@ -64,11 +66,8 @@ int main(int argc, char **argv) {
 	nice(-20);	// setea la prioridad del proceso -> rango es de [-20, 19], con -20 la mas alta prioridad
 
 	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_9, my_mac, dest_mac, false);
-
 	handler->set_filter(ESP_mac, dest_mac);
-
 	handler->set_recv_callback(&callback);
-
 	handler->start();
 
 	while(1) {

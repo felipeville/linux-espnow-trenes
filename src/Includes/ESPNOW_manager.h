@@ -1,11 +1,8 @@
 #ifndef ESPNOW_manager_H
 #define ESPNOW_manager_H
 
-#include <stdint.h>
 #include <linux/filter.h>
-#include <string.h>
 #include <sys/types.h>
-#include <stdint.h>
 #include <pthread.h>
 
 #include "ESPNOW_types.h"
