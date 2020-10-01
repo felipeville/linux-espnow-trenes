@@ -8,4 +8,4 @@ sudo iwconfig wlp5s0 mode monitor
 sudo ifconfig wlp5s0 up
 sudo iwconfig wlp5s0 channel 1 
 ```
-
+This is code is to measure the RTT with the ESP32
