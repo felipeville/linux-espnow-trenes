@@ -1,4 +1,3 @@
-
 CC = g++
 CFLAGS  = -g -Wall -std=c++11
 INCLUDES = -I src/Includes/
@@ -12,11 +11,11 @@ default: all
 app: main.o ESPNOW_manager.o ESPNOW_types.o
 	$(CC) $(CFLAGS) -o bin/exec $(addprefix bin/,$^) -pthread
 
-
 all: clear clean app
 
 clean: 
 	$(RM) bin/*
+	$(RM) data.csv
 
 clear:
 	clear

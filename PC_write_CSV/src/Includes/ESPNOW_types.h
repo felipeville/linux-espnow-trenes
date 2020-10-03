@@ -136,10 +136,5 @@ typedef struct {
 
 } __attribute__((__packed__)) ESPNOW_packet;
 
-typedef struct {
-	uint32_t sent_time;
-	float esp_data;
-
-} ESPNOW_payload;
 
 #endif
