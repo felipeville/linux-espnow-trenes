@@ -57,7 +57,7 @@ void setup() {
 void loop() {
 
 	t1 = millis();
-	if (t1 - t0 > 20) {
+	if (t1 - t0 >= 20) {
 		packet.timestamp = millis();
 		if (n % 5 == 0) {
 			h = 2 * (float)(k & 0x01) - 1;
