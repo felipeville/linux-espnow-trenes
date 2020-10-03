@@ -50,9 +50,6 @@ void setup() {
     setup_espnow();
     add_peer(mac_broadcast, CHANNEL, false);
 
-    packet.timestamp = 0;
-    packet.data = 0.f;
-
     Serial.println("Setup Completado!");
 }
 
