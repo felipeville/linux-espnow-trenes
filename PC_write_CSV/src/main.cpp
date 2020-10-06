@@ -5,6 +5,8 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <iomanip>
+#include <sstream>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -21,7 +23,7 @@ using namespace std;
 static uint8_t my_mac[6] = {0x48, 0x89, 0xE7, 0xFA, 0x60, 0x7C};
 static uint8_t dest_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};	// broadcast addr
 static uint8_t ESP_mac[6] = {0xC8, 0x2B, 0x96, 0xB4, 0xE6, 0xCC};
-static uint8_t ESP_mac2[6] = { 0xC8, 0x2B, 0x96, 0xB5, 0x78, 0x0C };
+//static uint8_t ESP_mac2[6] = { 0xC8, 0x2B, 0x96, 0xB5, 0x78, 0x0C };
 
 typedef struct {
 	uint32_t sent_time;
@@ -30,6 +32,7 @@ typedef struct {
 
 bool first_packet = true;
 uint32_t T0;
+uint32_t packet_counter = 0;
 
 bool stop_flag = false;		// flag de control para terminar el programa
 ESPNOW_payload rcv_data;	// struct para guardar los datos recibidos por la esp
@@ -54,7 +57,9 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 		first_packet = false;
 	}
 	
-	std::cout << "Packet Received from ESP: " << len << " bytes" << std::endl;	
+	packet_counter++;	
+	std::cout << "Packets Received from ESP : " << packet_counter << "\r";
+	std::cout.flush();
 
 	/* Guarda en el archivo */
 	*myFile << rcv_data.sent_time - T0 << "," << rcv_data.esp_data << "\n";
@@ -68,13 +73,13 @@ int main(int argc, char **argv) {
 	nice(-20);	// setea la prioridad del proceso -> rango es de [-20, 19], con -20 la mas alta prioridad
 	
 	myFile = new std::ofstream("data.csv");
-	std::thread close_ctrl(wait4key);		// inicia el thread para manejar el cierre del programa
-	
+	std::thread close_ctrl(wait4key);		// inicia el thread para manejar el cierre del programa	
+
 	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_1, my_mac, dest_mac, false);
 	handler->set_filter(ESP_mac, dest_mac);
 	handler->set_recv_callback(&callback);
 	handler->start();
-
+	
 	while(!stop_flag) {
 		std::this_thread::yield();
 	}
@@ -83,11 +88,11 @@ int main(int argc, char **argv) {
 	close_ctrl.join();
 	myFile->close();
 
-	if (agrc > 2) {
+	if (argc > 2) {
 		calcPacketLoss(atoi(argv[2]));
 	}
 	
-	std::cout << "Program terminated by user" << std::endl;
+	std::cout << "\nProgram terminated by user" << std::endl;
 
 	return 0;
 }
@@ -99,19 +104,18 @@ void calcPacketLoss(uint32_t T_ms) {
 	uint32_t last = 0, current = 0;
 	uint32_t delta = T_ms / 4;
 
-	int loss = 0, L = 0;
+	int loss = 0;
 
 	while (std::getline(file, line)) {
-		L++;	// number of lines
 		std::stringstream sstream(line);
 		sstream >> current;
 
 		if (current - last > T_ms + delta){
-			loss++;
+			loss += (current - last) / T_ms - 1;
 		}
 		last = current;
 	}
 
-	float percentage = (float)loss / L * 100;
+	float percentage = (float)loss / (packet_counter + loss)  * 100;
 	std::cout << "Packet Loss at " << T_ms << " [ms] : " << percentage << "%" << std::endl;
 }
