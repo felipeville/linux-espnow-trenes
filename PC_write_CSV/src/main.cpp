@@ -40,6 +40,7 @@ ESPNOW_manager *handler;
 /* Funcion de control para terminar el programa */
 void wait4key() { std::cin.get(); stop_flag = true; }
 
+void calcPacketLoss(uint32_t T_ms);
 
 /* Funcion de callback al recibir datos */
 void callback(uint8_t src_mac[6], uint8_t *data, int len) {
@@ -81,8 +82,36 @@ int main(int argc, char **argv) {
 	handler->end();
 	close_ctrl.join();
 	myFile->close();
+
+	if (agrc > 2) {
+		calcPacketLoss(atoi(argv[2]));
+	}
 	
 	std::cout << "Program terminated by user" << std::endl;
 
 	return 0;
+}
+
+void calcPacketLoss(uint32_t T_ms) {
+
+	std::ifstream file("data.csv");
+	std::string line;
+	uint32_t last = 0, current = 0;
+	uint32_t delta = T_ms / 4;
+
+	int loss = 0, L = 0;
+
+	while (std::getline(file, line)) {
+		L++;	// number of lines
+		std::stringstream sstream(line);
+		sstream >> current;
+
+		if (current - last > T_ms + delta){
+			loss++;
+		}
+		last = current;
+	}
+
+	float percentage = (float)loss / L * 100;
+	std::cout << "Packet Loss at " << T_ms << " [ms] : " << percentage << "%" << std::endl;
 }
