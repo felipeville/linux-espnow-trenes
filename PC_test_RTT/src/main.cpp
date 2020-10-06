@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-
+#include <iostream>
 #include <assert.h>
 #include <unistd.h>
 #include <sys/time.h>
@@ -20,12 +20,21 @@ using namespace std;
 static uint8_t my_mac[6] = {0x48, 0x89, 0xE7, 0xFA, 0x60, 0x7C};
 static uint8_t dest_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};	// broadcast addr
 static uint8_t ESP_mac[6] = {0xC8,0x2B,0x96,0xB4,0xE6,0xCC};
+static uint8_t ESP_mac2[6] = { 0xC8, 0x2B, 0x96, 0xB5, 0x78, 0x0C };
 
-int n_received;
+int n_received = 0;
 
 ESPNOW_manager *handler;
+ESPNOW_manager *handler2;
 
 uint8_t payload[127];
+
+void print_mac(uint8_t *mac){
+	for(int i = 0; i < 6; i++){
+		printf("%02x:", mac[i]);
+	}
+	printf("\b ");
+}
 
 /* Funcion para imprimir el contenido del paquete */
 void print_packet(uint8_t *data, int len)
@@ -43,19 +52,22 @@ void print_packet(uint8_t *data, int len)
 
 /* Funcion de callback al recibir datos */
 void callback(uint8_t src_mac[6], uint8_t *data, int len) {
-	handler->mypacket.wlan.actionframe.content.length = 127 + 5;
-	memcpy(handler->mypacket.wlan.actionframe.content.payload, data, 6);
+	//handler->mypacket.wlan.actionframe.content.length = 127 + 5;
+	//memcpy(handler->mypacket.wlan.actionframe.content.payload, data, 6);
 	
 	/* Estos dos bytes corresponden al numero del paquete */
-	if(data[4] == 0 && data[5] == 0){
+	/*if(data[4] == 0 && data[5] == 0){
 		n_received = 0;
-	}
+	}*/
 	n_received++;
 	
-	printf("Packets Received = %d\n", n_received);
-	print_packet(data, len);
+	std::cout << "Packets received from ";
+	print_mac(src_mac);
+	std::cout << "= " << n_received << "\r";
+	std::cout.flush();
+	//print_packet(data, len);
 
-	handler->send();
+	//handler->send();
 }
 
 int main(int argc, char **argv) {
@@ -63,13 +75,17 @@ int main(int argc, char **argv) {
 
 	nice(-20);	// setea la prioridad del proceso -> rango es de [-20, 19], con -20 la mas alta prioridad
 
-	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_9, my_mac, dest_mac, false);
+	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_1, my_mac, dest_mac, false);
+	handler2 = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_1, my_mac, dest_mac, false);
 
 	handler->set_filter(ESP_mac, dest_mac);
+	handler2->set_filter(ESP_mac2, dest_mac);
 
 	handler->set_recv_callback(&callback);
+	handler2->set_recv_callback(&callback);
 
 	handler->start();
+	handler2->start();
 
 	while(1) {
 		std::this_thread::yield();
