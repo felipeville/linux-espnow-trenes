@@ -11,9 +11,11 @@
 #include <esp_wifi.h>
 #include <WiFi.h>
 
+#define TOTAL_PACKETS	500
+#define	T_MS			20
 #define PAYLOAD_SIZE	8
-#define CHANNEL		1
-#define DATA_RATE	WIFI_PHY_RATE_6M
+#define CHANNEL			1
+#define DATA_RATE		WIFI_PHY_RATE_6M
 #define CUSTOM_WIFI_CFG true
 #define SET_ACTION(action, name) if(action == ESP_OK) { Serial.println(String(name) + " OK!"); } else{ Serial.println("Error with: "+String(name)); }
 
@@ -23,10 +25,11 @@ struct ESPNOW_payload {
 } packet;
 
 uint8_t mac_broadcast[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+
 uint32_t t0, t1;
 int n = 0;
 uint8_t k = 0;
-float h = 0.f;
+int N_packets = 0;
 
 esp_now_peer_info_t peer_info;
 
@@ -35,6 +38,8 @@ void setup_espnow();
 void add_peer(uint8_t* mac, int channel, bool encrypt);
 void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) { /* nothing for now */ };
 void OnDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) { /* nothing for now */ };
+float square_wave(int);
+float exp_cos(int);
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -44,11 +49,14 @@ void setup() {
 
 	if (CUSTOM_WIFI_CFG) {
 		WiFi.disconnect();
-	setup_custom_wifi();
+		setup_custom_wifi();
 	}
 
 	setup_espnow();
 	add_peer(mac_broadcast, CHANNEL, false);
+
+	packet.timestamp = 0;
+	packet.data = 0.f;
 
 	Serial.println("Setup Completado!");
 }
@@ -56,20 +64,39 @@ void setup() {
 // the loop function runs over and over again until power down or reset
 void loop() {
 
-	t1 = millis();
-	if (t1 - t0 >= 20) {
-		packet.timestamp = millis();
-		if (n % 5 == 0) {
-			h = 2 * (float)(k & 0x01) - 1;
-			k++;
+	if (N_packets < TOTAL_PACKETS) {
+
+		t1 = millis();
+		if (t1 - t0 >= T_MS) {
+			packet.timestamp = millis();
+			//float h = square_wave(n);
+			float h = exp_cos(n);
+			packet.data = h;
+			esp_now_send(peer_info.peer_addr, (uint8_t*)&packet, sizeof(packet));
+			n++;
+			N_packets++;
+			t0 = millis();
 		}
-		packet.data = h;
-		esp_now_send(peer_info.peer_addr, (uint8_t*) &packet, sizeof(packet));
-		n++;
-		t0 = millis();
+
 	}
 }
 
+float square_wave(int n) {
+
+	float h[] = { 1.0 , -1.0 };
+	if (n % 10 == 0) {
+		k++;
+		k = k & 0x01;
+	}
+
+	return h[k];
+}
+
+float exp_cos(int n) {
+
+	float h = 1 - (float)exp(-0.016 * n) * (float)cos(0.1 * n);
+	return h;
+}
 //////////////////////////////////////////////////////////////////////////
 
 /* Custom WiFi Settings for 'better' ESPNOW */
