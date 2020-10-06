@@ -76,16 +76,10 @@ int main(int argc, char **argv) {
 	nice(-20);	// setea la prioridad del proceso -> rango es de [-20, 19], con -20 la mas alta prioridad
 
 	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_1, my_mac, dest_mac, false);
-	handler2 = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_1, my_mac, dest_mac, false);
-
-	handler->set_filter(ESP_mac, dest_mac);
-	handler2->set_filter(ESP_mac2, dest_mac);
-
+	//handler->set_filter(ESP_mac, dest_mac);
+	handler->set_filter(ESP_mac, ESP_mac2, dest_mac);
 	handler->set_recv_callback(&callback);
-	handler2->set_recv_callback(&callback);
-
 	handler->start();
-	handler2->start();
 
 	while(1) {
 		std::this_thread::yield();
