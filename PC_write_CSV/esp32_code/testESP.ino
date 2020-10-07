@@ -50,6 +50,7 @@ void setup() {
 	if (CUSTOM_WIFI_CFG) {
 		WiFi.disconnect();
 		setup_custom_wifi();
+		//esp_wifi_set_ps(WIFI_PS_NONE); power saving mode none
 	}
 
 	setup_espnow();

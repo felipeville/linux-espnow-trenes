@@ -44,6 +44,7 @@ class ESPNOW_manager {
 
 		void unset_filter();
 		void set_filter(uint8_t *src_mac, uint8_t *dst_mac);
+		void set_filter(uint8_t *dst_mac);		// filter only by dst address
 		void set_interface(char* interface);
 		void set_recv_callback(void (*callback)(uint8_t src_mac[6], uint8_t *data, int len));
 		
