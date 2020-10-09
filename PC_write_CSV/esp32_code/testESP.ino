@@ -117,9 +117,9 @@ void loop() {
 			float h;
 
 			switch (esp_id) {
-			case 0: h = exp_cos(n);
-			case 1: h = exp_only(n, 80);
-			case 2: h = square_wave(n, 150);
+			case 0: { h = exp_cos(n); break; }
+			case 1: { h = exp_only(n, 80); break; }
+			case 2: { h = square_wave(n, 150); break; }
 			default: h = exp_cos(n);
 			}
 
