@@ -3,10 +3,10 @@ Do not forget to turn on monitor mode and choose the right channel on your wirel
 
 Here is a exmaple on how to do it : 
 ```
-sudo ifconfig wlp5s0 down
-sudo iwconfig wlp5s0 mode monitor
-sudo ifconfig wlp5s0 up
-sudo iwconfig wlp5s0 channel 1 
+sudo ifconfig wlp0s20f3 down
+sudo iwconfig wlp0s20f3 mode monitor
+sudo ifconfig wlp0s20f3 up
+sudo iwconfig wlp0s20f3 channel 1 
 ```
 
 ## How to run the code
@@ -21,7 +21,7 @@ sudo ./bin/exec <wifi_interface>
 ```
 An output file named `data.csv` will be generated in the base directory. The structure of the output file is the following:
 ```
-esp_id | pc_timestamp | esp_data | esp_timestamp
+esp_id , pc_timestamp , esp_data , esp_timestamp
 ```
 
 If you want to calculate the packet loss (not properly implemented yet):
@@ -39,4 +39,4 @@ You can also plot the receiving data in "real time" using `matplot_realtime.py`.
 ```
 python3 matplot_realtime.py <csv_file>
 ```
-In both cases you require the `matplotlib` and `pandas` libraries from Python.
+In both cases you require the `matplotlib` and `pandas` libraries for Python.
