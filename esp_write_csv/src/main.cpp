@@ -12,9 +12,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <thread>
-
 #include <fstream>
-//#include <sstream>
 
 #include "ESPNOW_manager.h"
 #include "ESPNOW_types.h"
@@ -44,6 +42,7 @@ bool first_packet = true;
 uint32_t t0_esp;			// tiempo inicial de la ESP
 uint32_t packet_counter = 0;
 auto t0_pc = std::chrono::steady_clock::now();	// tiempo inicial pc
+auto last_open_file = std::chrono::steady_clock::now();		// tiempo desde la ultima vez que se cerro el archivo
 
 bool stop_flag = false;		// flag de control para terminar el programa
 ESPNOW_payload rcv_data;	// struct para guardar los datos recibidos por la esp
@@ -62,9 +61,8 @@ int main(int argc, char **argv) {
 	assert(argc > 1);
 	nice(-20);	// setea la prioridad del proceso -> rango es de [-20, 19], con -20 la mas alta prioridad
 	
-	std::cout << number_of_ESPs << std::endl;
-
-	myFile = new std::ofstream("data.csv");
+	std::remove("data.csv");
+	myFile = new std::ofstream;
 	std::thread close_ctrl(wait4key);		// inicia un thread para manejar el cierre del programa	
 
 	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_8, my_mac, dest_mac, false);
@@ -74,6 +72,12 @@ int main(int argc, char **argv) {
 	handler->start();
 	
 	while(!stop_flag) {
+		auto time = std::chrono::steady_clock::now();
+		std::chrono::duration<double, std::milli> delta_t = time - last_open_file;
+		if (myFile->is_open() && delta_t.count() >= 30) {
+			myFile->close();
+			last_open_file = std::chrono::steady_clock::now();
+		}
 		std::this_thread::yield();
 	}
 	
@@ -110,8 +114,11 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	std::cout << "Packets Received from ESPs : " << packet_counter << "\r";
 	std::cout.flush();
 
+	if (!myFile->is_open()) {
+		myFile->open("data.csv", std::ofstream::out | std::ofstream::app)	// open file in output and append mode
+	}
 	/* Guarda en el archivo */
-	*myFile << get_ESP_id(src_mac) << "," << rcv_data.sent_time - t0_esp << "," << t_delta.count() << "," << rcv_data.esp_data << "\n";
+	*myFile << get_ESP_id(src_mac) << "," << t_delta.count() << "," << rcv_data.esp_data << "," << rcv_data.sent_time - t0_esp  << "\n";
 	
 	//handler->send();
 }

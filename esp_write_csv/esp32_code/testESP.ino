@@ -33,7 +33,7 @@ uint32_t TOTAL_PACKETS = 500;
 uint32_t t0, t1;
 int esp_id;
 int N_packets = 0;
-int n = 0;		// variable de tiempo como argumento para las funciones matematicas
+float to = 0;	// variable de tiempo como argumento para las funciones matematicas
 
 esp_now_peer_info_t peer_info;
 
@@ -62,9 +62,9 @@ void mqtt_callback(char* ftopic, uint8_t* msg, uint32_t len);
 void mqtt_refresh_loop() { client.loop(); }
 
 /* MATH functions to simulate data*/
-float square_wave(int, int);
-float exp_cos(int);
-float exp_only(int, int);
+float square_wave(float, float);
+float exp_cos(float);
+float sinc(float);
 int get_esp_id(uint8_t mac_lsb);
 
 // the setup function runs once when you press reset or power the board
@@ -98,34 +98,32 @@ void setup() {
 		for (int i = 0; i < sizeof(topic) / sizeof(String); i++)
 			Serial.println("> " + topic[i]);
 	}
-	mqtt_refresh.attach(1, mqtt_refresh_loop);		// llama a client.loop() cada 1 seg
+	client.setKeepAlive(60);
+	//mqtt_refresh.attach(1, mqtt_refresh_loop);		// llama a client.loop() cada 1 seg
 	/* ------------------------------------- */
 
-	packet.timestamp = 0;
-	packet.data = 0.f;
-
 	Serial.println("------ Setup Completado! ------");
+	to = millis() / 1000.0;
 }
 
 // the loop function runs over and over again until power down or reset
 void loop() {
 
+	float t = millis() / 1000.0 - to;
+	float h;
+	switch (esp_id) {
+	case 0: { h = exp_cos(t); break; }
+	case 1: { h = sinc(t); break; }
+	case 2: { h = square_wave(t, 1.5); break; }
+	default: h = exp_cos(t);
+	}
+
 	if (N_packets < TOTAL_PACKETS) {
 		t1 = millis();
 		if (t1 - t0 >= T_MS) {
-			packet.timestamp = millis();
-			float h;
-
-			switch (esp_id) {
-			case 0: { h = exp_cos(n); break; }
-			case 1: { h = exp_only(n, 80); break; }
-			case 2: { h = square_wave(n, 150); break; }
-			default: h = exp_cos(n);
-			}
-
+			packet.timestamp = t1;
 			packet.data = h;
 			esp_now_send(peer_info.peer_addr, (uint8_t*)&packet, sizeof(packet));
-			n++;
 			N_packets++;
 			t0 = millis();
 		}
@@ -135,6 +133,7 @@ void loop() {
 		N_packets++; 
 	}
 
+	client.loop();
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -178,7 +177,6 @@ void add_peer(uint8_t* mac, int channel, bool encrypt) {
 /* MQTT Setup */
 void setup_wifi_mqtt() {
 
-	delay(50);
 	Serial.println("Connecting to " + String(ssid));
 	WiFi.begin(ssid, password);
 
@@ -207,15 +205,14 @@ void mqtt_callback(char* ftopic, uint8_t* msg, uint32_t len) {
 	char* rcv_msg = (char*) malloc(len+1);
 	memcpy(rcv_msg, msg, len);
 	rcv_msg[len] = '\0';
-	//Serial.printf("Msg received: %s", msg);
-	if (!strcmp(rcv_msg, "resend")) {
-		N_packets = 0;
-		n = 0;
-	}
-	else if (!strcmp(ftopic, topic[0].c_str())) {
-		esp_id = atoi(rcv_msg);
-		if (esp_id > 2 || esp_id < 0) { esp_id = 0; }
-		Serial.println("Output function changed to = " + String(esp_id));
+
+	if (!strcmp(ftopic, topic[0].c_str())) {
+
+		if (!strcmp(rcv_msg, "resend")) {
+			N_packets = 0;
+			to = millis() / 1000.0;
+			Serial.println("Resending packets...");
+		}
 	}
 	else if ( !strcmp(ftopic, topic[1].c_str()) ) {
 		T_MS = atoi(rcv_msg);
@@ -231,23 +228,22 @@ void mqtt_callback(char* ftopic, uint8_t* msg, uint32_t len) {
 
 //////////////////////////////////////////////////////////////////////////
 /* MATH functions */
-float square_wave(int n, int T) {		// second order system square wave response
-	int k = n % T;
-	int j = n / T;
-	float h = 0.5 * (1 - expf(-0.12 * k) * cosf(0.5 * k)) * powf(-1, j);
+float square_wave(float t, float T) {		// second order system square wave response
+	float k = fmod(t, T);
+	int j = (int)(t / T);
+	float h = 0.5 * (1 - expf(-6 * k) * cosf(25 * k)) * powf(-1, j);
 	return h;
 }
 
-float exp_cos(int n) {		// second order system step response
-	float h = 1 - expf(-0.016 * n) * cosf(0.1 * n);
+float exp_cos(float t) {		// second order system step response
+	float h = 1 - expf(-0.7 * t) * cosf(5 * t);
 	return h;
 }
 
-float exp_only(int n, int T) {		// first order system step response
-	float h = 0;
-	int m = n - T;
-	if (m >= 0) {
-		h = 1.2 * (1 - expf(-0.016 * m) * cosf(0.02 * m));
+float sinc(float t) {		// sinc function
+	float h = 1;
+	if (t != 0) {
+		h = sinf(PI * t) / (PI * t);
 	}
 	return h;
 }
