@@ -26,7 +26,7 @@ graph_data = open(path, 'r').read()
 lines = graph_data.split('\n')
 for line in lines:
 	if len(line) > 1:
-		id, x, y = line.split(',')
+		id, x, y, z = line.split(',')
 		id = int(id)
 		x = float(x)
 		y = float(y)

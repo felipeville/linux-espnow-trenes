@@ -25,7 +25,7 @@ def animate(i):
 
 	for line in lines:
 		if len(line) > 1:
-			id, x, y = line.split(',')
+			id, x, y, z = line.split(',')
 			id = int(id)
 			if id + 1 > N_esp:
 				N_esp = id + 1
