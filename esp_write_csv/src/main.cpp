@@ -36,7 +36,7 @@ typedef struct {
 	uint64_t mac[10];
 	int n_esp = 0;
 	int get_esp_id(uint8_t* mac);
-} ESP_mac_list;
+} ESP_MAC_list;
 
 typedef struct {
 	uint32_t sent_time;
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
 	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_8, my_mac, dest_mac, false);
 	//handler->set_filter(ESP_macs[1], dest_mac);
-	handler->set_filter(dest_mac);
+	handler->set_filter(dest_mac);		// filtering only by destination MAC
 	handler->set_recv_callback(&callback);
 	handler->start();
 	
@@ -109,8 +109,8 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 		first_packet = false;
 	}
 
-	std::chrono::duration<double, std::milli> t_delta = t_now - t0_pc;
-	std::chrono::duration<double, std::milli> delta_t = t_now - last_open_file;
+	std::chrono::duration<double, std::milli> dt_rcv = t_now - t0_pc;
+	std::chrono::duration<double, std::milli> dt_file = t_now - last_open_file;
 
 	std::cout << "Packets Received from ESPs : " << packet_counter << "\r";
 	std::cout.flush();
@@ -119,10 +119,10 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 		myFile->open("data.csv", std::ofstream::out | std::ofstream::app);	// open file in output and append mode
 	}
 	/* Guarda en el archivo */
-	*myFile << id << "," << t_delta.count() << "," << rcv_data.esp_data << "," << rcv_data.sent_time - t0_esp  << "\n";
+	*myFile << id << "," << dt_rcv.count() << "," << rcv_data.esp_data << "," << rcv_data.sent_time - t0_esp  << "\n";
 	
-	if (myFile->is_open() && delta_t.count() >= 40) {
-		myFile->close();
+	if (myFile->is_open() && dt_file.count() >= 40) {	// close the file if more than ~40 ms has passed since the last time it was closed
+		myFile->close();								// this trick is only done to make the plot in "real time" look smooth
 		last_open_file = std::chrono::steady_clock::now();
 	}
 
@@ -131,7 +131,7 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 
 void calcPacketLoss(uint32_t T_ms) {
 
-	if(T_ms == 0) {return;}
+	if(T_ms <= 0) {return;}
 
 	std::ifstream file("data.csv");
 	std::string line;
@@ -165,11 +165,10 @@ int ESP_mac_list::get_esp_id(uint8_t* mac){
 			id = i;
 		}
 	}
-
 	if(id == -1){
-		mac_list.mac[n_esp] = mac_tr;
-		id = n_esp;
-		n_esp++;
+		mac_list.mac[mac_list.n_esp] = mac_tr;
+		id = mac_list.n_esp;
+		mac_list.n_esp++;
 	}
 	return id;
 }

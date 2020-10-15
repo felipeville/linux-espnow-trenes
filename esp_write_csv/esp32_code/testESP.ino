@@ -98,9 +98,12 @@ void setup() {
 		for (int i = 0; i < sizeof(topic) / sizeof(String); i++)
 			Serial.println("> " + topic[i]);
 	}
-	client.setKeepAlive(60);
-	//mqtt_refresh.attach(1, mqtt_refresh_loop);		// llama a client.loop() cada 1 seg
 	/* ------------------------------------- */
+
+	uint8_t ch; wifi_second_chan_t ch2;
+	esp_wifi_get_channel(&ch, &ch2);
+	float freq = 2.407 + 0.005 * (int)ch;
+	Serial.printf("Conectado al canal Wi-Fi: %d (%.3f GHz)\n", ch, freq);
 
 	Serial.println("------ Setup Completado! ------");
 	to = millis() / 1000.0;

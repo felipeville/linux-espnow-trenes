@@ -32,7 +32,7 @@ void ESPNOW_manager::unset_filter() {
 	this->bpf.len = 0;
 }
 
-void ESPNOW_manager::set_filter(uint8_t *dst_mac) {
+void ESPNOW_manager::set_filter2(uint8_t *dst_mac) {
 	//sudo tcpdump -i wlp5s0 'type 0 subtype 0xd0 and wlan[24:4]=0x7f18fe34 and wlan[32]=221 and wlan[33:4]&0xffffff = 0x18fe34 and wlan[37]=0x4 and wlan dst 11:22:33:44:55:66' -dd
 	unset_filter();
 
