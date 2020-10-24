@@ -1,11 +1,8 @@
 #ifndef ESPNOW_manager_H
 #define ESPNOW_manager_H
 
-#include <stdint.h>
 #include <linux/filter.h>
-#include <string.h>
 #include <sys/types.h>
-#include <stdint.h>
 #include <pthread.h>
 
 #include "ESPNOW_types.h"
@@ -46,7 +43,8 @@ class ESPNOW_manager {
 		}
 
 		void unset_filter();
-		void set_filter(uint8_t *src_mac, uint8_t *dst_mac);
+		void set_filter(uint8_t *src_mac = NULL, uint8_t *dst_mac = NULL);
+		void set_filter2(uint8_t *dst_mac);		// filter only by dst address
 		void set_interface(char* interface);
 		void set_recv_callback(void (*callback)(uint8_t src_mac[6], uint8_t *data, int len));
 		
