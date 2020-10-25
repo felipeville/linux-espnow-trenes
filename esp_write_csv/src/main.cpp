@@ -52,7 +52,7 @@ auto last_open_file = std::chrono::steady_clock::now();		// tiempo desde la ulti
 bool stop_flag = false;		// flag de control para terminar el programa
 ESPNOW_payload rcv_data;	// struct para guardar los datos recibidos por la esp
 std::ofstream *myFile;		// objeto para manejar el archivo de 'output'
-ESP_mac_list mac_list;		// struct para almacenar la lista de MACs
+ESP_MAC_list mac_list;		// struct para almacenar la lista de MACs
 
 ESPNOW_manager *handler;
 
@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
 	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_8, my_mac, dest_mac, false);
 	//handler->set_filter(ESP_macs[1], dest_mac);
-	handler->set_filter(dest_mac);		// filtering only by destination MAC
+	handler->set_filter();		// filtering only by ESP header
 	handler->set_recv_callback(&callback);
 	handler->start();
 	
@@ -154,7 +154,7 @@ void calcPacketLoss(uint32_t T_ms) {
 	std::cout << "Packet Loss at " << T_ms << " [ms] : " << percentage << "%" << std::endl;
 }
 
-int ESP_mac_list::get_esp_id(uint8_t* mac){
+int ESP_MAC_list::get_esp_id(uint8_t* mac){
 
 	int id = -1;
 	uint64_t LSB = MAC_4_LSBytes(mac);
