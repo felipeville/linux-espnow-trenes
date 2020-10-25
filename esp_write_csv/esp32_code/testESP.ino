@@ -33,6 +33,7 @@ uint32_t TOTAL_PACKETS = 500;
 uint32_t t0, t1;
 int esp_id;
 int N_packets = 0;
+int N_rcv = 0;
 float to = 0;	// variable de tiempo como argumento para las funciones matematicas
 
 esp_now_peer_info_t peer_info;
@@ -53,7 +54,7 @@ void setup_custom_wifi();
 void setup_espnow();
 void add_peer(uint8_t* mac, int channel, bool encrypt);
 void OnDataSent(const uint8_t* mac, esp_now_send_status_t status) { /* nothing for now */ };
-void OnDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) { /* nothing for now */ };
+void OnDataRecv(const uint8_t* mac, const uint8_t* incomingData, int len) { N_rcv++; /* nothing for now */ };
 
 /* MQTT functions */
 void setup_wifi_mqtt();
@@ -216,6 +217,14 @@ void mqtt_callback(char* ftopic, uint8_t* msg, uint32_t len) {
 			to = millis() / 1000.0;
 			Serial.println("Resending packets...");
 		}
+		else if(!strcmp(rcv_msg, "rcv")){
+			Serial.println("Packets received from other ESPs: " + String(N_rcv));
+		}
+		else if(!strcmp(rcv_msg, "reset rcv")){
+			Serial.println("Resetting 'rcv' counter.");
+			N_rcv = 0;
+		}
+		
 	}
 	else if ( !strcmp(ftopic, topic[1].c_str()) ) {
 		T_MS = atoi(rcv_msg);
