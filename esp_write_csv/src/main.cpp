@@ -40,8 +40,8 @@ typedef struct {
 
 typedef struct {
 	uint32_t sent_time;
-	float position;
-	float velocity;
+	double position;
+	double velocity;
 } ESPNOW_payload;
 
 bool first_packet = true;
