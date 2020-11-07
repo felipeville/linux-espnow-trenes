@@ -19,27 +19,32 @@ def animate(i):
 	lines = graph_data.split('\n')
 	xs = []
 	ys = []
+	ys2 = []
 	for i in range(0, 10):
 		xs.append([])
 		ys.append([])
+		ys2.append([])
 
 	for line in lines:
 		if len(line) > 1:
-			id, x, y, z = line.split(',')
+			id, t1, t2, x, v = line.split(',')
 			id = int(id)
 			if id + 1 > N_esp:
 				N_esp = id + 1
+			t2 = float(t2)
 			x = float(x)
-			y = float(y)
-			xs[id].append(x)
-			ys[id].append(y)
+			v = float(v)
+			xs[id].append(t2)
+			ys[id].append(x)
+			ys2[id].append(v)
 
 	ax.clear()
 	for i in range(0, N_esp):
 		ax.plot(xs[i], ys[i], linewidth=0.8)
+		ax.plot(xs[i], ys2[i], linewidth=0.8)
 
 	ax.grid()
-	ax.set_ylabel('Signal y(t)')
+	ax.set_ylabel('Signal x(t)')
 	ax.set_xlabel('Time [s]')
 	ax.set_title('ESPNOW Received Data')
 	#ax.axis([0, 11, 0, 1.8])

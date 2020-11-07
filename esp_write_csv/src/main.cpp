@@ -40,7 +40,8 @@ typedef struct {
 
 typedef struct {
 	uint32_t sent_time;
-	float esp_data;
+	float position;
+	float velocity;
 } ESPNOW_payload;
 
 bool first_packet = true;
@@ -84,9 +85,9 @@ int main(int argc, char **argv) {
 	close_ctrl.join();
 	myFile->close();
 
-	if (argc > 3 && !strcmp(argv[2],"-p")) {
+	/*if (argc > 3 && !strcmp(argv[2],"-p")) {
 		calcPacketLoss(atoi(argv[3]));
-	}
+	}*/
 	
 	std::cout << "\nProgram terminated by user" << std::endl;
 	return 0;
@@ -118,8 +119,10 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	if (!myFile->is_open()) {
 		myFile->open("data.csv", std::ofstream::out | std::ofstream::app);	// open file in output and append mode
 	}
-	/* Guarda en el archivo */
-	*myFile << id << "," << dt_rcv.count() << "," << rcv_data.esp_data << "," << rcv_data.sent_time - t0_esp  << "\n";
+	/* Guarda en el archivo 
+	 * Formato CSV: id, time_pc, time_esp, position, velocity
+	 */
+	*myFile << id << "," << dt_rcv.count() << "," << rcv_data.sent_time - t0_esp  << "," << rcv_data.position << "," << rcv_data.velocity << "\n";
 	
 	if (myFile->is_open() && dt_file.count() >= 40) {	// close the file if more than ~40 ms has passed since the last time it was closed
 		myFile->close();								// this trick is only done to make the plot in "real time" look smooth

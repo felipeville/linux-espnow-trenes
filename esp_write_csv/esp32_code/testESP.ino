@@ -21,7 +21,8 @@
 
 struct ESPNOW_payload {
 	uint32_t timestamp;
-	float data;
+	float position;
+	float velocity;
 } packet;
 
 static uint8_t mac_broadcast[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -114,19 +115,20 @@ void setup() {
 void loop() {
 
 	float t = millis() / 1000.0 - to;
-	float h;
+	float h, g;
 	switch (esp_id) {
-	case 0: { h = exp_cos(t); break; }
-	case 1: { h = sinc(t); break; }
-	case 2: { h = square_wave(t, 1.5); break; }
-	default: h = exp_cos(t);
+	case 0: { h = exp_cos(t); g = square_wave(t, 1.5); break; }
+	case 1: { h = sinc(t); g = exp_cos(t); break; }
+	case 2: { h = square_wave(t, 1.5); g = sinc(t); break; }
+	default: { h = exp_cos(t); g = square_wave(t, 1.5); } 
 	}
 
 	if (N_packets < TOTAL_PACKETS) {
 		t1 = millis();
 		if (t1 - t0 >= T_MS) {
 			packet.timestamp = t1;
-			packet.data = h;
+			packet.position = h;
+			packet.velocity = g;
 			esp_now_send(peer_info.peer_addr, (uint8_t*)&packet, sizeof(packet));
 			N_packets++;
 			t0 = millis();

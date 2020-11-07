@@ -17,27 +17,32 @@ fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 
 xs = []
-ys = []
+ys = []		# first Y axis
+ys2 = []	# second Y axis
 for i in range(0, N_esp):
 	xs.append([])
 	ys.append([])
+	ys2.append([])
 
 graph_data = open(path, 'r').read()
 lines = graph_data.split('\n')
 for line in lines:
 	if len(line) > 1:
-		id, x, y, z = line.split(',')
+		id, t1, t2, x, v = line.split(',')
 		id = int(id)
-		x = float(x)
-		y = float(y)
-		xs[id].append(x)
-		ys[id].append(y)
+		t2 = float(t2)
+		x = float(x)	# velocity
+		v = float(v)	# position
+		xs[id].append(t2)
+		ys[id].append(x)
+		ys2[id].append(v)
 
 for i in range(0, N_esp):
-	ax.plot(xs[i], ys[i], linewidth=0.8, label='ESP '+str(i))
+	ax.plot(xs[i], ys[i], linewidth=0.8, label='Position: ESP '+str(i))
+	ax.plot(xs[i], ys2[i], linewidth=0.8, label='Velocity: ESP '+str(i))
 
 ax.grid()
-ax.set_ylabel('Signal y(t)')
+ax.set_ylabel('Signal x(t)')
 ax.set_xlabel('Time [s]')
 ax.set_title('ESPNOW Received Data')
 ax.legend()
