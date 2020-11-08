@@ -30,7 +30,7 @@ for line in lines:
 	if len(line) > 1:
 		id, t1, t2, x, v = line.split(',')
 		id = int(id)
-		t2 = float(t2)
+		t2 = float(t1)
 		x = float(x)	# velocity
 		v = float(v)	# position
 		xs[id].append(t2)

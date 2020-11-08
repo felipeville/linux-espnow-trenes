@@ -31,7 +31,7 @@ def animate(i):
 			id = int(id)
 			if id + 1 > N_esp:
 				N_esp = id + 1
-			t2 = float(t2)
+			t2 = float(t1)
 			x = float(x)
 			v = float(v)
 			xs[id].append(t2)
