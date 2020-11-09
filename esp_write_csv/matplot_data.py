@@ -14,7 +14,8 @@ data = pd.read_csv(path, header=None)
 N_esp = np_max(data[0]) + 1
 
 fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)
+ax = fig.add_subplot(1, 2, 1)
+bx = fig.add_subplot(1, 2, 2)
 
 xs = []
 ys = []		# first Y axis
@@ -39,12 +40,18 @@ for line in lines:
 
 for i in range(0, N_esp):
 	ax.plot(xs[i], ys[i], linewidth=0.8, label='Position: ESP '+str(i))
-	ax.plot(xs[i], ys2[i], linewidth=0.8, label='Velocity: ESP '+str(i))
+	bx.plot(xs[i], ys2[i], linewidth=0.8, label='Velocity: ESP '+str(i))
 
 ax.grid()
 ax.set_ylabel('Signal x(t)')
 ax.set_xlabel('Time [s]')
-ax.set_title('ESPNOW Received Data')
+ax.set_title('Position')
 ax.legend()
+
+bx.grid()
+bx.set_ylabel('Signal xv(t)')
+bx.set_xlabel('Time [s]')
+bx.set_title('Velocity')
+bx.legend()
 
 plt.show()

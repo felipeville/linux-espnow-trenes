@@ -39,6 +39,7 @@ typedef struct {
 } ESP_MAC_list;
 
 typedef struct {
+	uint8_t leader;
 	uint32_t sent_time;
 	double position;
 	double velocity;
