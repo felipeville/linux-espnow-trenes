@@ -41,7 +41,7 @@ def animate(i):
 	ax.clear()
 	for i in range(0, N_esp):
 		ax.plot(xs[i], ys[i], linewidth=0.8)
-		ax.plot(xs[i], ys2[i], linewidth=0.8)
+		ax.plot(xs[i], ys2[i], linestyle='--', linewidth=0.8)
 
 	ax.grid()
 	ax.set_ylabel('Signal x(t)')

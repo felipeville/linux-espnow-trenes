@@ -44,13 +44,13 @@ for i in range(0, N_esp):
 
 ax.grid()
 ax.set_ylabel('Signal x(t)')
-ax.set_xlabel('Time [s]')
+ax.set_xlabel('Time [ms]')
 ax.set_title('Position')
 ax.legend()
 
 bx.grid()
-bx.set_ylabel('Signal xv(t)')
-bx.set_xlabel('Time [s]')
+bx.set_ylabel('Signal v(t)')
+bx.set_xlabel('Time [ms]')
 bx.set_title('Velocity')
 bx.legend()
 
