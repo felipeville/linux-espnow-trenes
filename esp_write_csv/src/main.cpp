@@ -23,6 +23,7 @@ using namespace std;
 
 static uint8_t my_mac[6] = {0x48, 0x89, 0xE7, 0xFA, 0x60, 0x7C};
 static uint8_t dest_mac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};	// broadcast addr
+static uint8_t mac_leader[6] = {0x1A, 0x2B, 0x3C, 0x4D, 0x5E, 0x6F};
 /*static uint8_t ESP_macs[][6] = {	{ 0xC8, 0x2B, 0x96, 0xB4, 0xE6, 0xCC },
 									{ 0xC8, 0x2B, 0x96, 0xB5, 0x78, 0x0C },
 									{ 0xC4, 0x4F, 0x33, 0x15, 0xB0, 0x99 }
@@ -35,6 +36,7 @@ static uint8_t ESP_mac2[6] = { 0xC8, 0x2B, 0x96, 0xB5, 0x78, 0x0C };*/
 typedef struct {
 	uint64_t mac[10];
 	int n_esp = 0;
+	uint32_t t0_esp[10];
 	int get_esp_id(uint8_t* mac);
 } ESP_MAC_list;
 
@@ -46,6 +48,7 @@ typedef struct {
 } ESPNOW_payload;
 
 bool first_packet = true;
+bool flag_t0_esp = false;
 uint32_t t0_esp;			// tiempo inicial de la ESP
 uint32_t packet_counter = 0;
 auto t0_pc = std::chrono::steady_clock::now();	// tiempo inicial pc
@@ -72,6 +75,8 @@ int main(int argc, char **argv) {
 	myFile = new std::ofstream("data.csv");
 	std::thread close_ctrl(wait4key);		// inicia un thread para manejar el cierre del programa	
 
+	mac_list.get_esp_id(mac_leader);	// se agrega mac lider para que siempre sea id = 0
+
 	handler = new ESPNOW_manager(argv[1], DATARATE_6Mbps, CHANNEL_freq_8, my_mac, dest_mac, false);
 	//handler->set_filter(ESP_macs[1], dest_mac);
 	handler->set_filter();		// filtering only by ESP header
@@ -85,10 +90,6 @@ int main(int argc, char **argv) {
 	handler->end();
 	close_ctrl.join();
 	myFile->close();
-
-	/*if (argc > 3 && !strcmp(argv[2],"-p")) {
-		calcPacketLoss(atoi(argv[3]));
-	}*/
 	
 	std::cout << "\nProgram terminated by user" << std::endl;
 	return 0;
@@ -106,9 +107,13 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	
 	/* Normalizacion para que el primer timestamp sea 0 */
 	if(first_packet){
-		t0_esp = rcv_data.sent_time;
 		t0_pc = t_now;
 		first_packet = false;
+	}
+
+	if(flag_t0_esp){
+		mac_list.t0_esp[id] = rcv_data.sent_time;
+		flag_t0_esp = false;
 	}
 
 	std::chrono::duration<double, std::milli> dt_rcv = t_now - t0_pc;
@@ -123,7 +128,7 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	/* Guarda en el archivo 
 	 * Formato CSV: id, time_pc, time_esp, position, velocity
 	 */
-	*myFile << id << "," << dt_rcv.count() << "," << rcv_data.sent_time - t0_esp  << "," << rcv_data.position << "," << rcv_data.velocity << "\n";
+	*myFile << id << "," << dt_rcv.count() << "," << rcv_data.sent_time - mac_list.t0_esp[id]  << "," << rcv_data.position << "," << rcv_data.velocity << "\n";
 	
 	if (myFile->is_open() && dt_file.count() >= 40) {	// close the file if more than ~40 ms has passed since the last time it was closed
 		myFile->close();								// this trick is only done to make the plot in "real time" look smooth
@@ -131,31 +136,6 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	}
 
 	//handler->send();
-}
-
-void calcPacketLoss(uint32_t T_ms) {
-
-	if(T_ms <= 0) {return;}
-
-	std::ifstream file("data.csv");
-	std::string line;
-	uint32_t last = 0, current = 0;
-	uint32_t delta = T_ms / 4;
-
-	int loss = 0;
-
-	while (std::getline(file, line)) {
-		std::stringstream sstream(line);
-		sstream >> current;
-
-		if (current - last > T_ms + delta){
-			loss += (current - last) / T_ms - 1;
-		}
-		last = current;
-	}
-
-	float percentage = (float)loss / (packet_counter + loss)  * 100;
-	std::cout << "Packet Loss at " << T_ms << " [ms] : " << percentage << "%" << std::endl;
 }
 
 int ESP_MAC_list::get_esp_id(uint8_t* mac){
@@ -170,9 +150,10 @@ int ESP_MAC_list::get_esp_id(uint8_t* mac){
 		}
 	}
 	if(id == -1){
-		mac_list.mac[mac_list.n_esp] = mac_tr;
 		id = mac_list.n_esp;
+		mac_list.mac[id] = mac_tr;
 		mac_list.n_esp++;
+		flag_t0_esp = true;
 	}
 	return id;
 }
