@@ -49,6 +49,7 @@ typedef struct {
 
 bool first_packet = true;
 bool flag_t0_esp = false;
+std::string *filename;
 uint32_t t0_esp;			// tiempo inicial de la ESP
 uint32_t packet_counter = 0;
 auto t0_pc = std::chrono::steady_clock::now();	// tiempo inicial pc
@@ -71,8 +72,15 @@ int main(int argc, char **argv) {
 	assert(argc > 1);
 	nice(-20);	// setea la prioridad del proceso -> rango es de [-20, 19], con -20 la mas alta prioridad
 	
-	std::remove("data.csv");
-	myFile = new std::ofstream("data.csv");
+	if(argc > 2){
+		filename = new std::string(argv[2]);
+	}
+	else{
+		filename = new std::string("data.csv");
+	}
+
+	std::remove(filename->c_str());
+	myFile = new std::ofstream(filename->c_str());
 	std::thread close_ctrl(wait4key);		// inicia un thread para manejar el cierre del programa	
 
 	mac_list.get_esp_id(mac_leader);	// se agrega mac lider para que siempre sea id = 0
@@ -123,7 +131,7 @@ void callback(uint8_t src_mac[6], uint8_t *data, int len) {
 	std::cout.flush();
 
 	if (!myFile->is_open()) {
-		myFile->open("data.csv", std::ofstream::out | std::ofstream::app);	// open file in output and append mode
+		myFile->open(filename->c_str(), std::ofstream::out | std::ofstream::app);	// open file in output and append mode
 	}
 	/* Guarda en el archivo 
 	 * Formato CSV: id, time_pc, time_esp, position, velocity
