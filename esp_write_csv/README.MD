@@ -17,18 +17,12 @@ make
 
 And to run the program :
 ```
-sudo ./bin/exec <wifi_interface>
+sudo ./bin/exec <wifi_interface> <output_file.csv>
 ```
-An output file named `data.csv` will be generated in the base directory. The structure of the output file is the following:
+If no name for the output file is specified, a file named `data.csv` will be generated in the base directory. The structure of the output file is the following:
 ```
-esp_id , pc_timestamp , esp_data , esp_timestamp
+esp_id , pc_timestamp , esp_timestamp , position , velocity
 ```
-
-If you want to calculate the packet loss (not properly implemented yet):
-```
-sudo ./bin/exec <wifi_interface> -p <esp_transmission_rate>
-```
-where you have to enter the transmission rate at which the ESP sends pacekts.
 
 ## Plot the Data
 You can plot the resulting data using `matplot_data.py`. Example:
